@@ -1,7 +1,8 @@
 services:
-  # ── Milvus Standalone (embedded etcd, local storage — no MinIO needed) ──
+  # ── Milvus Vector Database ──
   milvus:
     image: milvusdb/milvus:v2.5.5
+    container_name: atlas-milvus
     command: ["milvus", "run", "standalone"]
     environment:
       - ETCD_USE_EMBED=true
@@ -11,14 +12,56 @@ services:
     ports:
       - "19530:19530"
       - "9091:9091"
+    restart: unless-stopped
 
   # ── Redis Cache ──
   redis:
     image: redis:7-alpine
+    container_name: atlas-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    restart: unless-stopped
+
+  # ── Atlas AI API ──
+  api:
+    build: .
+    container_name: atlas-api
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "9734"]
+    ports:
+      - "9734:9734"
+    environment:
+      - MILVUS_URI=http://milvus:19530
+      - REDIS_URI=redis://redis:6379
+      - LLM_PROVIDER=${LLM_PROVIDER:-deepseek}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-m3}
+    env_file:
+      - .env
+    depends_on:
+      - milvus
+      - redis
+    restart: unless-stopped
+
+  # ── Atlas AI Streamlit UI ──
+  ui:
+    build: .
+    container_name: atlas-ui
+    command: ["streamlit", "run", "src/ui/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    ports:
+      - "8501:8501"
+    environment:
+      - MILVUS_URI=http://milvus:19530
+      - REDIS_URI=redis://redis:6379
+      - LLM_PROVIDER=${LLM_PROVIDER:-deepseek}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+    env_file:
+      - .env
+    depends_on:
+      - api
+    restart: unless-stopped
 
 volumes:
   milvus_data:
