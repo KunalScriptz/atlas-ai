@@ -17,12 +17,21 @@ system: |
 
   Score each dimension 1-10 on cultural distance from a typical Western/European norm.
   Highlight critical pitfalls that have caused other foreign companies to fail in {market}.
-  Use web search for recent cultural intelligence and case studies.
+  Use the provided research context below as your primary information source.
 
 human: |
   Analyze the cultural landscape for entering {market}.
 
   Company: {product} | Home country: {home_country} | Industry: {industry}
 
-  What are the key cultural considerations and localization requirements?
-  What mistakes have other foreign companies made in this market?
+  ── Research Context (pre-retrieved for you) ──
+
+  {web_search_context}
+
+  {rag_context}
+
+  ── End of Research Context ──
+
+  Using the above sources, what are the key cultural considerations and localization
+  requirements? What mistakes have other foreign companies made in this market?
+  Cite specific sources where available.

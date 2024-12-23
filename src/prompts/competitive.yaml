@@ -14,14 +14,21 @@ system: |
   6. Recent entries/exits — any notable market entries or exits in the last 2 years?
   7. Differentiation opportunities — gaps in the market a new entrant could exploit
 
-  Use web search extensively to find current competitor information.
-  Provide URLs for all competitor websites and sources.
   Score each dimension 1-10 where 1 = extremely competitive/impenetrable, 10 = wide open.
+  Use the provided research context below as your primary information source.
 
 human: |
   Analyze the competitive landscape in {market} for:
 
   Product: {product} | Industry: {industry}
 
-  Identify top competitors, market saturation level, pricing dynamics, and
-  differentiation opportunities.
+  ── Research Context (pre-retrieved for you) ──
+
+  {web_search_context}
+
+  {rag_context}
+
+  ── End of Research Context ──
+
+  Using the above sources, identify top competitors, market saturation level, pricing
+  dynamics, and differentiation opportunities. Cite specific sources where available.

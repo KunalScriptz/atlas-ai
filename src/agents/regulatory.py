@@ -9,3 +9,4 @@ from src.schemas import RegulatoryResult
 class RegulatoryAgent(BaseAgent):
     prompt_file = "regulatory.yaml"
     output_schema = RegulatoryResult
+    domain = "trade_laws"

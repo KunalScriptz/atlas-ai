@@ -17,6 +17,7 @@ system: |
   For each dimension, provide a 1-10 score and summary.
   Recommend the best entity structure with rationale.
   Cite sources (government portals, tax authority websites).
+  Use the provided research context below as your primary information source.
 
 human: |
   Analyze corporate structuring options for entering {market}.
@@ -24,4 +25,13 @@ human: |
   Company: {product} | Industry: {industry}
   Home country: {home_country} | Budget: {budget}
 
-  Recommend the optimal entity structure with costs, timeline, and tax implications.
+  ── Research Context (pre-retrieved for you) ──
+
+  {web_search_context}
+
+  {rag_context}
+
+  ── End of Research Context ──
+
+  Using the above sources, recommend the optimal entity structure with costs,
+  timeline, and tax implications. Cite specific sources where available.

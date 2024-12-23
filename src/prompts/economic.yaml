@@ -15,12 +15,21 @@ system: |
   7. Infrastructure quality — logistics, internet, banking system reliability
 
   Score each dimension 1-10 (1 = extreme risk, 10 = very stable).
-  Use World Bank API and web search for current data.
   Cite specific ratings, indices, and reports with dates.
+  Use the provided research context below as your primary information source.
 
 human: |
   Assess macroeconomic and political risk for entering {market}.
 
   Company base: {home_country} | Industry: {industry} | Budget: {budget}
 
-  What are the currency, political, and economic risks of this market?
+  ── Research Context (pre-retrieved for you) ──
+
+  {web_search_context}
+
+  {rag_context}
+
+  ── End of Research Context ──
+
+  Using the above sources, analyze the currency, political, and economic risks of this
+  market. Cite specific ratings and indices where available.

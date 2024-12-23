@@ -23,9 +23,8 @@ system: |
   Rules:
   - ALWAYS cite your sources with URLs where possible
   - If information is unavailable or uncertain, explicitly say so — do not fabricate
-  - Use the web search tool to find current regulatory information
-  - Use the RAG tool to retrieve from the knowledge base of trade laws and regulations
   - Be specific to {market} — do not give generic advice
+  - Use the provided research context below as your primary information source
 
 human: |
   Analyze the regulatory environment for market entry into {market}.
@@ -37,5 +36,14 @@ human: |
   - Expansion budget: {budget}
   - Specific concerns: {concerns}
 
-  Provide a thorough regulatory analysis with scored dimensions, timelines,
-  critical blockers, and a summary recommendation.
+  ── Research Context (pre-retrieved for you) ──
+
+  {web_search_context}
+
+  {rag_context}
+
+  ── End of Research Context ──
+
+  Using the above sources, provide a thorough regulatory analysis with scored
+  dimensions, timelines, critical blockers, and a summary recommendation.
+  Cite specific sources from the context above where available.

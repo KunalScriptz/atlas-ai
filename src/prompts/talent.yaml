@@ -16,11 +16,20 @@ system: |
 
   Score each dimension 1-10 (1 = severe talent shortage/restrictions, 10 = abundant and easy).
   Provide salary bands in local currency and USD equivalent.
-  Use web search for current salary data (Glassdoor, LinkedIn, local job boards).
+  Use the provided research context below as your primary information source.
 
 human: |
   Analyze the talent market in {market} for a {industry} company.
 
   Product: {product} | Home country: {home_country} | Budget: {budget}
 
-  What is the talent availability, cost, and visa complexity?
+  ── Research Context (pre-retrieved for you) ──
+
+  {web_search_context}
+
+  {rag_context}
+
+  ── End of Research Context ──
+
+  Using the above sources, analyze talent availability, salary benchmarks, labor laws,
+  and operational costs. Cite specific sources where available.

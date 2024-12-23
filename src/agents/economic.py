@@ -7,3 +7,4 @@ from src.schemas import EconomicResult
 class EconomicAgent(BaseAgent):
     prompt_file = "economic.yaml"
     output_schema = EconomicResult
+    domain = "economic"
