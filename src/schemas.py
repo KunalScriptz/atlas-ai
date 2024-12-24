@@ -89,6 +89,15 @@ class JobStatus(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
+class UploadResponse(BaseModel):
+    """Response after document upload and ingestion."""
+
+    filename: str
+    domain: str
+    chunks_ingested: int
+    status: str  # ingested | skipped
+
+
 # ──────────────────────────────────────────────
 # Agent Structured Outputs
 # ──────────────────────────────────────────────

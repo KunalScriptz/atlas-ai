@@ -83,6 +83,14 @@ def render_input_form() -> tuple[bool, dict]:
             default=[],
         )
 
+        uploaded_files = st.file_uploader(
+            "Upload documents (optional)",
+            type=["pdf", "docx", "pptx", "html", "md", "txt"],
+            accept_multiple_files=True,
+            help="Upload trade laws, tax guides, salary surveys, or any market research documents. "
+                 "These will be parsed and used by the RAG agents for deeper analysis.",
+        )
+
         submitted = st.form_submit_button(
             "🔍 Run Analysis",
             type="primary",
@@ -101,6 +109,7 @@ def render_input_form() -> tuple[bool, dict]:
             "budget": budget,
             "priorities": priorities,
             "specific_concerns": specific_concerns,
+            "uploaded_files": uploaded_files or [],
         }
 
     if submitted:

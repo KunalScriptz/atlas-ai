@@ -27,6 +27,72 @@ _text_splitter = RecursiveCharacterTextSplitter(
 )
 
 
+async def ingest_single_file(file_path: str | Path, domain: str) -> int:
+    """Ingest a single file into a Milvus domain collection.
+
+    Pipeline: Docling parse → chunk → embed → Milvus insert.
+
+    Args:
+        file_path: Path to a PDF/DOCX/PPTX/HTML file
+        domain: Target Milvus domain (trade_laws, tax_corporate, etc.)
+
+    Returns:
+        Number of chunks ingested
+    """
+    file_path = Path(file_path)
+    if not file_path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    log.info("Ingesting single file '%s' into domain '%s'", file_path.name, domain)
+
+    # Parse with Docling
+    docs = await load_documents([str(file_path)])
+    if not docs:
+        log.warning("Docling parsed zero documents from %s", file_path.name)
+        return 0
+
+    # Add domain + source metadata
+    for doc in docs:
+        doc.metadata["domain"] = domain
+        doc.metadata["source"] = file_path.name
+        doc.metadata["chunk_hash"] = hashlib.sha256(doc.page_content.encode()).hexdigest()[:16]
+
+    # Chunk
+    chunks = _text_splitter.split_documents(docs)
+    log.info("Split '%s': %d docs → %d chunks", file_path.name, len(docs), len(chunks))
+
+    if not chunks:
+        return 0
+
+    # Embed + insert in batches
+    embeddings = get_embeddings()
+    client = get_client()
+    collection_name = get_collection_name(domain)
+
+    ensure_collections(client)
+
+    batch_size = 32
+    total = 0
+
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i : i + batch_size]
+        texts = [c.page_content for c in batch]
+        metadatas = [c.metadata for c in batch]
+
+        vectors = await asyncio.to_thread(embeddings.embed_documents, texts)
+
+        data = [
+            {"vector": v, "text": t, **m}
+            for v, t, m in zip(vectors, texts, metadatas)
+        ]
+        await asyncio.to_thread(client.insert, collection_name=collection_name, data=data)
+
+        total += len(batch)
+
+    log.info("Ingested %d chunks from '%s' into %s", total, file_path.name, collection_name)
+    return total
+
+
 async def ingest_domain(domain: str, source_dir: str | Path) -> int:
     """Ingest all documents in a domain directory into Milvus.
 

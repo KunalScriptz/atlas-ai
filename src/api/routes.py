@@ -1,15 +1,18 @@
-"""FastAPI routes — analyze, status, report, health."""
+"""FastAPI routes — analyze, status, report, health, upload."""
 
 from __future__ import annotations
 
+import asyncio
+import tempfile
 import uuid
+from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
 from src.graph.workflow import app
-from src.schemas import AnalyzeRequest, AnalyzeResponse, JobStatus
+from src.schemas import AnalyzeRequest, AnalyzeResponse, JobStatus, UploadResponse
 from src.utils.logger import get_logger
 
 log = get_logger(__name__)
@@ -109,6 +112,49 @@ async def health() -> dict[str, str]:
         status["redis"] = f"error: {e}"
 
     return status
+
+
+@router.post("/upload", response_model=UploadResponse)
+async def upload_document(
+    file: UploadFile = File(...),
+    domain: str = Form(..., description="One of: trade_laws, tax_corporate, cultural, talent, economic, competitive"),
+) -> UploadResponse:
+    """Upload a document (PDF/DOCX/PPTX/HTML) for RAG ingestion.
+
+    The file is parsed with Docling, chunked, embedded with BGE-M3,
+    and stored in the matching Milvus domain collection.
+    """
+    from src.rag.vector_store import DOMAINS
+
+    if domain not in DOMAINS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid domain '{domain}'. Must be one of: {', '.join(DOMAINS)}",
+        )
+
+    # Save uploaded file to temp dir
+    suffix = Path(file.filename or "upload").suffix or ".pdf"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+
+    try:
+        from src.rag.ingest import ingest_single_file
+
+        chunks = await ingest_single_file(tmp_path, domain)
+        log.info("Uploaded '%s' → domain '%s': %d chunks ingested", file.filename, domain, chunks)
+        return UploadResponse(
+            filename=file.filename or "unknown",
+            domain=domain,
+            chunks_ingested=chunks,
+            status="ingested",
+        )
+    except Exception as e:
+        log.error("Upload ingestion failed for '%s': %s", file.filename, e)
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {e}")
+    finally:
+        # Clean up temp file
+        Path(tmp_path).unlink(missing_ok=True)
 
 
 async def _run_analysis(job_id: str) -> None:
