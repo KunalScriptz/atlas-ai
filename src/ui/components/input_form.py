@@ -91,6 +91,14 @@ def render_input_form() -> tuple[bool, dict]:
                  "These will be parsed and used by the RAG agents for deeper analysis.",
         )
 
+        upload_market = st.selectbox(
+            "Documents apply to which market?",
+            options=["All Markets (global)"] + [m for m in MARKETS_OPTIONS],
+            index=0,
+            help="Filter uploaded docs to a specific market, or leave as global to match all.",
+            disabled=not bool(uploaded_files),
+        )
+
         submitted = st.form_submit_button(
             "🔍 Run Analysis",
             type="primary",
@@ -101,6 +109,11 @@ def render_input_form() -> tuple[bool, dict]:
         # Strip region labels for API
         clean_markets = [m.split(" (")[0] if " (" in m else m for m in markets]
 
+        # Parse market filter
+        upload_market_value = ""
+        if upload_market and upload_market != "All Markets (global)":
+            upload_market_value = upload_market.split(" (")[0] if " (" in upload_market else upload_market
+
         return True, {
             "product": product,
             "home_country": home_country,
@@ -110,6 +123,7 @@ def render_input_form() -> tuple[bool, dict]:
             "priorities": priorities,
             "specific_concerns": specific_concerns,
             "uploaded_files": uploaded_files or [],
+            "upload_market": upload_market_value,
         }
 
     if submitted:

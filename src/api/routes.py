@@ -118,11 +118,16 @@ async def health() -> dict[str, str]:
 async def upload_document(
     file: UploadFile = File(...),
     domain: str = Form(..., description="One of: trade_laws, tax_corporate, cultural, talent, economic, competitive"),
+    market: str = Form(default="", description="Optional market tag (e.g. UAE, Germany). Empty = global."),
 ) -> UploadResponse:
     """Upload a document (PDF/DOCX/PPTX/HTML) for RAG ingestion.
 
     The file is parsed with Docling, chunked, embedded with BGE-M3,
     and stored in the matching Milvus domain collection.
+
+    Optional `market` tags the document for market-filtered retrieval.
+    Documents tagged "UAE" will only surface when researching UAE.
+    Documents with no market tag are treated as "global" and match all markets.
     """
     from src.rag.vector_store import DOMAINS
 
@@ -141,8 +146,9 @@ async def upload_document(
     try:
         from src.rag.ingest import ingest_single_file
 
-        chunks = await ingest_single_file(tmp_path, domain)
-        log.info("Uploaded '%s' → domain '%s': %d chunks ingested", file.filename, domain, chunks)
+        chunks = await ingest_single_file(tmp_path, domain, market=market)
+        market_label = market or "global"
+        log.info("Uploaded '%s' → domain '%s' [%s]: %d chunks ingested", file.filename, domain, market_label, chunks)
         return UploadResponse(
             filename=file.filename or "unknown",
             domain=domain,

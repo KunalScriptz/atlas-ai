@@ -59,19 +59,21 @@ async def run_analysis(request: dict) -> None:
     import httpx
 
     uploaded_files = request.pop("uploaded_files", [])
+    upload_market = request.pop("upload_market", "")
 
     async with httpx.AsyncClient(timeout=600) as client:
         # Step 1: Upload files (if any)
         if uploaded_files:
             upload_count = 0
-            with st.spinner(f"Uploading and indexing {len(uploaded_files)} document(s)..."):
+            market_label = upload_market or "global"
+            with st.spinner(f"Uploading and indexing {len(uploaded_files)} document(s) [{market_label}]..."):
                 for uf in uploaded_files:
                     domain = _guess_domain(uf.name)
                     try:
                         files_data = {"file": (uf.name, uf.getvalue(), uf.type)}
                         upload_resp = await client.post(
                             f"{API_URL}/upload",
-                            data={"domain": domain},
+                            data={"domain": domain, "market": upload_market},
                             files=files_data,
                         )
                         if upload_resp.status_code == 200:

@@ -27,7 +27,9 @@ _text_splitter = RecursiveCharacterTextSplitter(
 )
 
 
-async def ingest_single_file(file_path: str | Path, domain: str) -> int:
+async def ingest_single_file(
+    file_path: str | Path, domain: str, market: str = ""
+) -> int:
     """Ingest a single file into a Milvus domain collection.
 
     Pipeline: Docling parse → chunk → embed → Milvus insert.
@@ -35,6 +37,7 @@ async def ingest_single_file(file_path: str | Path, domain: str) -> int:
     Args:
         file_path: Path to a PDF/DOCX/PPTX/HTML file
         domain: Target Milvus domain (trade_laws, tax_corporate, etc.)
+        market: Optional market tag (e.g. "UAE", "Germany"). Empty = global.
 
     Returns:
         Number of chunks ingested
@@ -51,10 +54,11 @@ async def ingest_single_file(file_path: str | Path, domain: str) -> int:
         log.warning("Docling parsed zero documents from %s", file_path.name)
         return 0
 
-    # Add domain + source metadata
+    # Add domain + source + market metadata
     for doc in docs:
         doc.metadata["domain"] = domain
         doc.metadata["source"] = file_path.name
+        doc.metadata["market"] = market or "global"
         doc.metadata["chunk_hash"] = hashlib.sha256(doc.page_content.encode()).hexdigest()[:16]
 
     # Chunk
@@ -123,9 +127,10 @@ async def ingest_domain(domain: str, source_dir: str | Path) -> int:
     if not docs:
         return 0
 
-    # Add domain metadata
+    # Add domain + market metadata (CLI ingestion tags market from directory name if present)
     for doc in docs:
         doc.metadata["domain"] = domain
+        doc.metadata["market"] = "global"
         doc.metadata["chunk_hash"] = hashlib.sha256(doc.page_content.encode()).hexdigest()[:16]
 
     # Chunk

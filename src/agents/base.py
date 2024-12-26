@@ -87,8 +87,12 @@ class BaseAgent:
 
     # ── Context retrieval (RAG + Web Search in parallel) ──
 
-    async def _retrieve_context(self, query: str) -> tuple[str, str]:
+    async def _retrieve_context(self, query: str, market: str = "") -> tuple[str, str]:
         """Run Milvus retriever + DuckDuckGo web search concurrently.
+
+        Args:
+            query: Search query string
+            market: Optional market filter for RAG retrieval (e.g. "UAE", "Germany")
 
         Returns:
             (rag_context, web_search_context) — formatted strings ready for prompt injection.
@@ -102,7 +106,7 @@ class BaseAgent:
             try:
                 from src.rag.retrievers import get_retriever
 
-                retriever = get_retriever(self.domain)
+                retriever = get_retriever(self.domain, market=market)
                 rag_coro = retriever.ainvoke(query)
             except Exception as e:
                 log.debug("RAG retriever unavailable for %s: %s", self.domain, e)
@@ -205,7 +209,8 @@ class BaseAgent:
         """
         # ── Step 1: Retrieve context (RAG + Web Search) ──
         query = self._build_search_query(context)
-        rag_context, web_context = await self._retrieve_context(query)
+        market = context.get("market", "")
+        rag_context, web_context = await self._retrieve_context(query, market=market)
 
         context["rag_context"] = rag_context
         context["web_search_context"] = web_context
