@@ -12,6 +12,23 @@
 
 ---
 
+## The Problem
+
+Expanding a digital product into a new country means answering questions across 6 dimensions per market:
+
+- **Regulatory:** Can a foreign company own 100%? What license is needed?
+- **Corporate:** What entity type? What's the tax rate? Free zone vs mainland?
+- **Cultural:** How do you negotiate? What offends local partners?
+- **Competitive:** Who already dominates? What do they charge?
+- **Talent:** What are salary benchmarks? Contractor vs employee rules?
+- **Economic:** Is the currency stable? Any geopolitical risks?
+
+**3 markets × 6 dimensions = 18 deep-dive research tasks.** A consulting firm takes weeks and charges $10K–$50K. A single LLM prompt gives generic, unsourced answers — one generalist model can't think deeply about UAE corporate law AND German cultural norms AND Singapore salary data in the same response.
+
+Atlas AI solves this by deploying **18 specialized agents in parallel** — each researches one dimension in one country with its own domain knowledge, retrieved documents, and live web search. What took weeks now takes ~6 minutes, with every score backed by real sources.
+
+---
+
 ## Architecture
 
 ```
