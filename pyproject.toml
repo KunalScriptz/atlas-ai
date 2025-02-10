@@ -1,6 +1,6 @@
 [project]
 name = "atlas-ai"
-version = "0.2.0"
+version = "0.1.0"
 description = "Cross-border market entry intelligence platform — multi-agent RAG swarm"
 requires-python = ">=3.12"
 dependencies = [
@@ -8,8 +8,10 @@ dependencies = [
     "langchain>=0.3.0",
     "langchain-community>=0.3.0",
     "langchain-milvus>=0.1.0",
+    "langchain-deepseek>=0.1.0",
     "langchain-openai>=0.3.0",
     "langchain-ollama>=0.2.0",
+    "langchain-huggingface>=0.1.0",
     "sentence-transformers>=3.0.0",
     "pymilvus>=2.5.0",
     "docling>=2.0.0",
