@@ -1,7 +1,9 @@
 """LLM factory — returns the right model based on LLM_PROVIDER env var.
 
-Aug 2024: DeepSeek accessed via ChatOpenAI compatible endpoint.
-Future: Ollama support planned for fully local, zero-API-key runs.
+Timeline-compatible:
+- Aug 2024: DeepSeek via ChatOpenAI shim (langchain-deepseek didn't exist yet)
+- Feb 2025: langchain-deepseek official package (preferred, auto-detected)
+- Future:   Ollama for fully local, zero-API-key runs
 """
 
 from __future__ import annotations
@@ -19,15 +21,25 @@ def get_llm() -> BaseChatModel:
     provider = settings.llm_provider.lower()
 
     if provider == "deepseek":
-        from langchain_openai import ChatOpenAI
+        try:
+            from langchain_deepseek import ChatDeepSeek
 
-        log.info("Using DeepSeek via ChatOpenAI compatible endpoint")
-        return ChatOpenAI(
-            model=settings.deepseek_model,
-            api_key=settings.deepseek_api_key,
-            base_url="https://api.deepseek.com/v1",
-            temperature=0.3,
-        )
+            log.info("Using langchain-deepseek (official package)")
+            return ChatDeepSeek(
+                model=settings.deepseek_model,
+                api_key=settings.deepseek_api_key,
+                temperature=0.3,
+            )
+        except ImportError:
+            from langchain_openai import ChatOpenAI
+
+            log.info("langchain-deepseek not found — using ChatOpenAI shim (Aug 2024 compat)")
+            return ChatOpenAI(
+                model=settings.deepseek_model,
+                api_key=settings.deepseek_api_key,
+                base_url="https://api.deepseek.com/v1",
+                temperature=0.3,
+            )
 
     if provider == "ollama":
         from langchain_ollama import ChatOllama
