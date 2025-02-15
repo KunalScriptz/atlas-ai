@@ -3,7 +3,7 @@ name: Deploy Atlas AI
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # Manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -13,28 +13,18 @@ jobs:
         working-directory: /home/ubuntu/all_bots/atlas-ai
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Create .env from secrets
+      - name: Pull latest code
         run: |
-          cat > .env << 'EOF'
-          LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}
-          DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
-          DEEPSEEK_MODEL=${{ secrets.DEEPSEEK_MODEL }}
-          MILVUS_URI=${{ secrets.MILVUS_URI }}
-          REDIS_URI=${{ secrets.REDIS_URI }}
-          EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}
-          EOF
+          git pull origin main
 
       - name: Deploy with Docker Compose
         run: |
           docker compose down --remove-orphans
-          docker compose up --build -d --wait
+          docker compose up --build -d
 
       - name: Health check
         run: |
-          sleep 10
+          sleep 15
           curl -f http://localhost:9734/health || exit 1
           echo "API healthy"
 
