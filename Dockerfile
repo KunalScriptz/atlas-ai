@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install uv (fast Rust-based Python package manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-COPY pyproject.toml uv.lock ./
-RUN UV_SYSTEM_PYTHON=1 uv sync --no-dev --frozen
+COPY pyproject.toml ./
+RUN uv pip install --system --no-cache -e .
 
 COPY . .
 

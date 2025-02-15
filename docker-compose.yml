@@ -27,6 +27,7 @@ services:
   # ── Atlas AI API ──
   api:
     build: .
+    image: atlas-ai:latest
     container_name: atlas-api
     command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "9734"]
     ports:
@@ -47,7 +48,7 @@ services:
 
   # ── Atlas AI Streamlit UI ──
   ui:
-    build: .
+    image: atlas-ai:latest
     container_name: atlas-ui
     command: ["streamlit", "run", "src/ui/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
     ports:
