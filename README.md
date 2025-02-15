@@ -93,8 +93,9 @@ cp .env.example .env
 # Start infrastructure only
 docker compose up -d milvus redis
 
-# Install dependencies (first run downloads BGE-M3 ~2GB)
+# Install dependencies
 pip install -e .
+# Or faster: uv sync --no-dev (requires uv: pip install uv)
 
 # (Optional) Ingest RAG documents
 # Place PDFs/DOCX in data/{trade_laws,tax_corporate,cultural,talent,economic,competitive}/
