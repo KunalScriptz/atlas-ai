@@ -61,44 +61,47 @@ Streamlit UI (:8501) ──► FastAPI (:9734) ──► LangGraph StateGraph
 
 ## Quick Start
 
-### 1. Clone & Setup
+### Option A: Docker (Recommended)
 
 ```bash
-git clone <repo-url> atlas-ai
+git clone https://github.com/KunalScriptz/atlas-ai.git
 cd atlas-ai
 
 # Copy env template and add your DeepSeek API key
 cp .env.example .env
 # Edit .env: set DEEPSEEK_API_KEY=sk-your-key
-```
 
-### 2. Start Infrastructure
-
-```bash
+# Start everything (Milvus, Redis, API, UI)
 docker compose up -d
-# Milvus: http://localhost:19530 (gRPC), http://localhost:9091 (WebUI)
-# Redis: localhost:6379
+
+# View logs with container names
+docker compose logs -f
 ```
 
-### 3. Install Dependencies
+Open http://localhost:8501, fill the form, click **Run Analysis**.
+
+### Option B: Manual (Development)
 
 ```bash
+git clone https://github.com/KunalScriptz/atlas-ai.git
+cd atlas-ai
+
+# Copy env template and add your DeepSeek API key
+cp .env.example .env
+# Edit .env: set DEEPSEEK_API_KEY=sk-your-key
+
+# Start infrastructure only
+docker compose up -d milvus redis
+
+# Install dependencies (first run downloads BGE-M3 ~2GB)
 pip install -e .
-# First run downloads BGE-M3 (~2GB) from HuggingFace
-```
 
-### 4. (Optional) Ingest RAG Documents
-
-```bash
+# (Optional) Ingest RAG documents
 # Place PDFs/DOCX in data/{trade_laws,tax_corporate,cultural,talent,economic,competitive}/
 python -m src.rag.ingest data/
-```
 
-### 5. Run
-
-```bash
 # Terminal 1: API
-uvicorn src.main:app --port 9734
+uvicorn src.main:app --port 9734 --reload
 
 # Terminal 2: UI
 streamlit run src/ui/app.py --server.port 8501
