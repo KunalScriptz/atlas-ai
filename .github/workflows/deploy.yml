@@ -1,0 +1,42 @@
+name: Deploy Atlas AI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Manual trigger from GitHub UI
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /home/ubuntu/all_bots/atlas-ai
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create .env from secrets
+        run: |
+          cat > .env << 'EOF'
+          LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}
+          DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL=${{ secrets.DEEPSEEK_MODEL }}
+          MILVUS_URI=${{ secrets.MILVUS_URI }}
+          REDIS_URI=${{ secrets.REDIS_URI }}
+          EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}
+          EOF
+
+      - name: Deploy with Docker Compose
+        run: |
+          docker compose down --remove-orphans
+          docker compose up --build -d --wait
+
+      - name: Health check
+        run: |
+          sleep 10
+          curl -f http://localhost:9734/health || exit 1
+          echo "API healthy"
+
+      - name: Prune old images
+        run: docker image prune -f
