@@ -1,6 +1,7 @@
 """Base agent class — YAML prompt loading, tool binding, structured output.
 
 Every agent inherits from this. Zero hardcoded prompts — all from YAML.
+Uses PydanticOutputParser for reliable structured output across any LLM provider.
 """
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ from typing import Any
 
 import yaml
 from langchain_core.language_models import BaseChatModel
+from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.tools import BaseTool
 
 from src.llm.factory import get_llm
@@ -23,6 +25,8 @@ class BaseAgent:
     """Base for all agents. Handles prompt loading, LLM binding, tool registration.
 
     Subclass and call `self.run(context)` — structured output is automatic.
+    Uses PydanticOutputParser (text parsing) instead of with_structured_output()
+    for better compatibility across LLM providers including DeepSeek.
     """
 
     prompt_file: str = ""  # Set in subclass, e.g. "regulatory.yaml"
@@ -36,6 +40,11 @@ class BaseAgent:
         self.prompts: dict[str, str] = self._load_prompts()
         self.search_tool = DuckDuckGoSearchTool()
         self.tools: list[BaseTool] = [self.search_tool.as_tool()]
+
+        # Set up output parser from schema
+        self.parser: PydanticOutputParser | None = None
+        if self.output_schema:
+            self.parser = PydanticOutputParser(pydantic_object=self.output_schema)
 
     def _load_prompts(self) -> dict[str, str]:
         prompt_path = Path(__file__).parent.parent / "prompts" / self.prompt_file
@@ -55,6 +64,11 @@ class BaseAgent:
         system_msg = system_template.format(**context, **missing)
         human_msg = human_template.format(**context, **missing)
 
+        # Append format instructions from the output parser
+        if self.parser:
+            format_instructions = self.parser.get_format_instructions()
+            system_msg = f"{system_msg}\n\n{format_instructions}"
+
         return [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": human_msg},
@@ -68,22 +82,26 @@ class BaseAgent:
         }
 
     async def run(self, context: dict[str, Any], max_retries: int = 2) -> Any:
-        """Execute the agent — returns structured output if output_schema is set.
-
-        Retries on empty responses (some LLMs occasionally return {} for structured output).
-        """
+        """Execute the agent — uses PydanticOutputParser for structured output."""
         messages = self.build_messages(context)
 
-        if self.output_schema:
-            structured_llm = self.llm.with_structured_output(self.output_schema)
+        if self.parser:
             for attempt in range(max_retries + 1):
-                result = await structured_llm.ainvoke(messages)
-                if result is not None and not (hasattr(result, "model_dump") and not result.model_dump()):
-                    return result
-                if attempt < max_retries:
-                    log.warning("Agent %s returned empty output, retrying (%d/%d)",
-                                self.__class__.__name__, attempt + 1, max_retries)
-            return result  # Return last attempt even if empty
+                result = await self.llm.ainvoke(messages)
+                text = result.content if hasattr(result, "content") else str(result)
+                try:
+                    parsed = self.parser.parse(text)
+                    if parsed is not None:
+                        return parsed
+                except Exception as e:
+                    if attempt < max_retries:
+                        log.warning("Agent %s parse failed (attempt %d/%d): %s",
+                                    self.__class__.__name__, attempt + 1, max_retries, e)
+                    else:
+                        log.error("Agent %s failed after %d retries: %s",
+                                  self.__class__.__name__, max_retries + 1, e)
+                        raise
+            return None
         else:
             llm_with_tools = self.llm.bind_tools(self.tools)
             result = await llm_with_tools.ainvoke(messages)
