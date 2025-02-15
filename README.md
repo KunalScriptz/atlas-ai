@@ -6,6 +6,9 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Live Demo](https://img.shields.io/badge/demo-live-green.svg)](https://atlas-ai.helixos.pro/)
+
+**🌐 Live at [https://atlas-ai.helixos.pro/](https://atlas-ai.helixos.pro/)** — Deployed on Oracle Cloud with GitHub Actions CI/CD.
 
 ---
 
@@ -44,18 +47,21 @@ Streamlit UI (:8501) ──► FastAPI (:9734) ──► LangGraph StateGraph
 
 ### Tech Stack (All Open-Source Except LLM)
 
-| Layer | Technology | API Key? |
-|-------|-----------|----------|
-| LLM | DeepSeek (swappable → Ollama) | Yes |
-| Orchestration | LangGraph | No |
-| RAG Framework | LangChain + langchain-milvus | No |
-| Embeddings | BGE-M3 (1024d, multilingual, local) | No |
-| Vector DB | Milvus 2.5 (Docker, hybrid BM25) | No |
-| Doc Parsing | Docling (IBM, MIT) | No |
-| Web Search | DuckDuckGo | No |
-| API | FastAPI | No |
-| UI | Streamlit | No |
-| Cache | Redis | No |
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| **LLM** | DeepSeek (swappable → Ollama) | LLM factory pattern — swap via `.env`, no code changes |
+| **Orchestration** | LangGraph | StateGraph with `Send()` parallel fan-out: 18 agents run concurrently across 3 markets |
+| **RAG Framework** | LangChain + langchain-milvus | Async-first: `.ainvoke()` throughout, PydanticOutputParser for structured output |
+| **Embeddings** | BGE-M3 (1024d, multilingual) | 100+ languages, runs locally on CPU, zero API cost. Handles German, Arabic, Chinese legal docs natively |
+| **Vector DB** | Milvus 2.5 (Docker) | Self-hosted standalone, embedded etcd, local storage. 6 domain collections with COSINE similarity |
+| **Doc Parsing** | Docling (IBM, MIT) | PDF/DOCX/PPTX/HTML with table extraction. CPU-bound ops via `asyncio.to_thread()` |
+| **Web Search** | DuckDuckGo | Free, zero API key. 1h Redis cache to avoid rate limiting |
+| **Economic Data** | World Bank API | Free GDP, inflation, trade indicators per country |
+| **API** | FastAPI | Async job management, background `asyncio.create_task()` for swarm execution |
+| **UI** | Streamlit | Real-time progress polling, per-market expandable results, scored comparison tables |
+| **Cache** | Redis | Targeted: web pages (24h), embeddings (permanent), search results (1h) |
+| **PDF Reports** | ReportLab | Downloadable market entry reports |
+| **CI/CD** | GitHub Actions | Self-hosted Oracle Cloud runner, auto-deploy on push to main |
 
 ---
 
