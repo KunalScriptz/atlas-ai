@@ -59,6 +59,7 @@ services:
       - LLM_PROVIDER=${LLM_PROVIDER:-deepseek}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
       - API_URL=http://atlas-api:9734
+      - STREAMLIT_SERVER_ENABLE_STATIC_SERVING=true
     env_file:
       - .env
     depends_on:
