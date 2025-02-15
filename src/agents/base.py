@@ -67,16 +67,24 @@ class BaseAgent:
             "industry", "budget", "concerns",
         }
 
-    async def run(self, context: dict[str, Any]) -> Any:
-        """Execute the agent — returns structured output if output_schema is set."""
+    async def run(self, context: dict[str, Any], max_retries: int = 2) -> Any:
+        """Execute the agent — returns structured output if output_schema is set.
+
+        Retries on empty responses (some LLMs occasionally return {} for structured output).
+        """
         messages = self.build_messages(context)
 
         if self.output_schema:
             structured_llm = self.llm.with_structured_output(self.output_schema)
-            result = await structured_llm.ainvoke(messages)
-            return result
+            for attempt in range(max_retries + 1):
+                result = await structured_llm.ainvoke(messages)
+                if result is not None and not (hasattr(result, "model_dump") and not result.model_dump()):
+                    return result
+                if attempt < max_retries:
+                    log.warning("Agent %s returned empty output, retrying (%d/%d)",
+                                self.__class__.__name__, attempt + 1, max_retries)
+            return result  # Return last attempt even if empty
         else:
-            # Bind tools and let the agent decide when to use them
             llm_with_tools = self.llm.bind_tools(self.tools)
             result = await llm_with_tools.ainvoke(messages)
             return result
