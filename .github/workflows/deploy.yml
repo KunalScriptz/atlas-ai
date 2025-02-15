@@ -15,6 +15,7 @@ jobs:
     steps:
       - name: Pull latest code
         run: |
+          git config --global --add safe.directory /home/ubuntu/all_bots/atlas-ai
           git pull origin main
 
       - name: Deploy with Docker Compose
