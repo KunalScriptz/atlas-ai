@@ -15,13 +15,13 @@ jobs:
     steps:
       - name: Pull latest code
         run: |
-          git config --global --add safe.directory /home/ubuntu/all_bots/atlas-ai
-          git pull origin main
+          sudo git config --global --add safe.directory /home/ubuntu/all_bots/atlas-ai
+          sudo git -C /home/ubuntu/all_bots/atlas-ai pull origin main
 
       - name: Deploy with Docker Compose
         run: |
-          docker compose down --remove-orphans
-          docker compose up --build -d
+          sudo docker compose -f /home/ubuntu/all_bots/atlas-ai/docker-compose.yml down --remove-orphans
+          sudo docker compose -f /home/ubuntu/all_bots/atlas-ai/docker-compose.yml up --build -d
 
       - name: Health check
         run: |
@@ -30,4 +30,4 @@ jobs:
           echo "API healthy"
 
       - name: Prune old images
-        run: docker image prune -f
+        run: sudo docker image prune -f
