@@ -32,6 +32,8 @@ if "result" not in st.session_state:
     st.session_state.result = None
 
 
+API_URL = __import__("os").environ.get("API_URL", "http://localhost:9734")
+
 async def run_analysis(request: dict) -> None:
     """Submit analysis to API and poll for results."""
     import httpx
@@ -39,7 +41,7 @@ async def run_analysis(request: dict) -> None:
     async with httpx.AsyncClient(timeout=600) as client:
         # Submit
         resp = await client.post(
-            "http://localhost:9734/analyze",
+            f"{API_URL}/analyze",
             json=request,
         )
         resp.raise_for_status()
@@ -51,7 +53,7 @@ async def run_analysis(request: dict) -> None:
         with st.spinner("Agent swarm analyzing markets..."):
             while True:
                 status_resp = await client.get(
-                    f"http://localhost:9734/status/{job['job_id']}"
+                    f"{API_URL}/status/{job['job_id']}"
                 )
                 job_status = status_resp.json()
 
@@ -64,7 +66,7 @@ async def run_analysis(request: dict) -> None:
         # Fetch report
         if job_status["status"] == "done":
             report_resp = await client.get(
-                f"http://localhost:9734/report/{job['job_id']}"
+                f"{API_URL}/report/{job['job_id']}"
             )
             st.session_state.result = report_resp.json()
 
